@@ -1,0 +1,413 @@
+# Generating and Running the Tests
+
+....
+
+
+
+
+
+
+
+
+......
+
+
+
+-----------------------------------------------------------------------------------------------
+##
+
+
+
+
+-----------------------------------------------------------------------------------------------
+##
+
+
+
+
+-----------------------------------------------------------------------------------------------
+## Generating the Test Source Text
+
+You should first change directory (current working directory) to the root directory of the 
+source text. 
+
+For example, suppose we have a project named 'KwikAir' whose source text files are all in a
+tree rooted at the directory `C:\Ada Source\KwikAir` on a Windows machine. 
+
+The following command could be used to change to this directory: 
+
+    cd "C:\Ada Source\KwikAir"
+    
+This works on `CMD`, PowerShell, and `bash`, but note that the path separator is (strictly) 
+the `/` forward slash on non-Windows (or CP/M, or DOS) systems. Also note that if any part of 
+the path has a space in it, the surrounding `"` quotes are necessary. 
+
+In `CMD`, you may also need to explicitly change to the C drive:
+
+    c:
+
+This root directory must have the `.satis` subdirectory .....
+
+.......
+
+Run the .....
+
+    picat satis
+
+
+
+
+
+
+
+If any generated file already exists, it is overwritten (without warning). 
+
+
+
+
+
+
+????? Normal arguments must match the names of [build variants](concepts.md#variants). If none is
+specified, all variants will be built. 
+
+
+
+
+If one or 
+more categories are specified, only scenarios in those categories are generated; otherwise, 
+all scenarios are generated. 
+
+
+
+
+
+-----------------------------------------------------------------------------------------------
+## Generation Arguments and Options
+
+The normal arguments are category names, .....
+
+The current version of the program, version 1.0, recognises the following options. 
+
+
+### Option: `help`
+
+The `--help` option .....
+
+
+### Option: `version`
+
+The `--version` option .....
+
+
+### Option: ``
+
+The `--` option .....
+
+
+### Option: ``
+
+The `--` option .....
+
+
+
+-----------------------------------------------------------------------------------------------
+## Building
+
+Having regenerated, the source text files representing the tests and the `SATIS.Tests.Run` .....
+
+
+.......
+
+
+????? For each [build variant](concepts.md#variants), you should build a _unit test program_, using 
+your usual Ada compilation and build toolset, 
+
+The name of the resulting executable file should be suitable to identify the program:
+
+ * running unit tests; 
+ 
+ * restricted to the named build variant. 
+
+So, for example, if the build variant is the default, 
+the resulting executable binary 
+file might be named `kwikair-tests` or `kwikair-tests.exe`. 
+
+If we were to have a build variant `x`
+
+
+
+-----------------------------------------------------------------------------------------------
+## Running the Tests
+
+Running a unit test program will run unit tests and print 
+out a [report](results.md) (onto the standard output) afterwards. 
+
+
+### Categories
+
+The normal arguments supplied must be category names. If there 
+is any space or punctuation in a name, it must be enclosed in quotes. If no categories are specified, 
+then all categories in the program's build variant will be run. 
+
+.....
+
+
+
+### Parallelism
+
+The tests are executed in parallel, using a set of _worker tasks_. This functionality is encapsulated in the package 
+
+
+
+??????The tests are all completed before the program prints anything at all to the console. Since it
+may take a long time to run all the tests, it may be a long time before any output appears on
+the console.
+
+The output is suitable to be redirected, into a file for example. The program never expects any
+console input.  
+
+
+
+-----------------------------------------------------------------------------------------------
+## Unit Test Program Arguments and Options
+
+
+
+
+
+
+
+
+
+
+### Category Selection
+
+The 
+
+    Categories: in SATIS.Category_Set := SATIS.No_Categories;
+
+
+.......
+
+### Quiet and Verbose Modes
+
+    Verbosity:  in SATIS.Output_Verbosity := SATIS.Normal_Verbosity
+
+If the  `--quiet` .....
+
+..... `--verbose` .....
+
+
+
+-----------------------------------------------------------------------------------------------
+## Scripting the process
+
+.....
+
+
+### Example 1
+
+the following very simple PowerShell script might be named `test.ps1` and be located in the 
+root directory:
+
+```ps1
+
+$XF=.\bin\kwikair
+$PF=kwikair.gpr
+$RF=results.txt
+$TS=(get-date -format "{yyyy-MM-dd_HH-mm}")
+$TD="C:\Ada Source\KwikAir\Testing\Results\$TS"
+Write-Host "Running unit tests $TS"
+pushd "$TD"
+Write-Host "... generating ... "
+picat satis
+if ($LastExitCode -gt 0) { throw "generation ERROR! "; }
+Write-Host "... building ... "
+gprbuild -P$PF
+if ($LastExitCode -gt 0) { throw "building ERROR! "; }
+Write-Host "... running ... "
+"$XF" >$RF
+if ($LastExitCode -gt 1) { throw "testing ERROR! "; }
+if ($LastExitCode -eq 0) {
+   Write-Host "all tests passed"
+} else {
+   Write-Host "at least one test FAILED (results in $TS\$RF)"
+}
+Write-Host "... all testing completed. "
+popd
+```
+
+All this script does is to .........
+
+
+
+```allegra
+
+with standard
+use standard
+XF := ./bin/kwikair
+PF := kwikair.gpr
+RF := results.txt
+TS := (date format "yyyy-MM-dd_HH-mm")
+TD := "C:/Ada Source/KwikAir/Testing/Results/(TS)"
+put "Running unit tests (TS)"
+pushd (TD)
+put "... generating ... "
+EC := (run satis {})
+if ((EC) > 0) then; throw "generation ERROR! "; end if
+put "... building ... "
+EC := (run gprbuild {-P(PF)})
+if ((EC) > 0) then; throw "building ERROR! "; end if
+put "... running ... "
+pipeline
+   EC := (run (XF))
+   put-input-into (RF)
+end pipeline
+if ((EC) > 1) then; throw "testing ERROR! "; end if
+if ((EC) = 0) then
+   put "all tests passed"
+else
+   put "at least one test FAILED "'('" results in (TS)/(RF)"')'
+end if
+put "... all testing completed. "
+popd
+```
+
+
+
+
+
+
+
+### Example 2
+
+Supposing we have three [build variants](concepts.md#variants): 
+
+ * `Smoke`
+
+ * `Bookings`
+
+ * `Accounting`
+
+We wish to build three different unit test programs, named: 
+
+ * `kwikair-tests-smoke.exe`
+
+ * `kwikair-tests-bookings.exe`
+
+ * `kwikair-tests-accounts.exe`
+
+These are named `.exe` because we are working on a Windows machine, but the same principles 
+apply regardless of operating system. 
+
+Each of the three different unit test programs is built using a GNAT project file named: 
+
+ * `kwikair-tests-smoke.gpr`
+
+ * `kwikair-tests-bookings.gpr`
+
+ * `kwikair-tests-accounts.gpr`
+
+These different project files have differences in configuration suited to the different build 
+variants. 
+
+The following PowerShell script .....
+
+```ps1
+
+$BVA="Smoke Tests","Bookings","Accounting"
+$BNA="smoke","bookings","accounts"
+$NV=3
+$TD="C:\Ada Source\KwikAir\Testing\Results\$TS"
+$TS=(get-date -format "{yyyy-MM-dd_HH-mm}")
+pushd "$TD"
+for ($V=0; $V -lt $NV; $V++)
+{
+   $BV=$BVA[$V]
+   $BN=$BNA[$V]
+   $PF=kwikair-$BN.gpr
+   $XF=.\bin\kwikair-$BN
+   $RF=results-$BN.txt
+   echo "Running $BV unit tests $TS ... "
+   echo "... generating ... "
+   satis $BV
+   if ($LastExitCode -gt 0) { echo "... generation ERROR! "; exit 1; }
+   echo "... building ... "
+   gprbuild -P$PF
+   if ($LastExitCode -gt 0) { echo "... building ERROR! "; exit 1; }
+   echo "... running ... "
+   "$XF" >$RF
+   if ($LastExitCode -gt 1) { echo "... testing ERROR! "; exit 1; }
+   if ($LastExitCode -eq 0) {
+      echo "... all tests passed ... "
+   } else {
+      echo "... at least one test FAILED (results in $TS\$RF) ... "
+   }
+}
+echo "... all testing completed. "
+popd
+```
+
+
+
+
+
+```allegra
+
+BVA := {"Smoke Tests" Bookings Accounting}
+BNA := {smoke bookings accounts}
+ensure (((BVA) length) = ((BNA) length))
+TS := ((clock) formatted-as '(year)-(month)-(day)_(hour24)-(minute)')
+TD := "C:/Ada Source/KwikAir/Testing/Results/(TS)"
+pushd (TD)
+for V in (1 .. ((BVA) length)) loop
+   BV := (BVA # (V))
+   BN := (BNA # (V))
+   PF := kwikair-(BN).gpr
+   XF := .\bin\kwikair-(BN)
+   RF := results-(BN).txt
+   put "Running (BV) unit tests (TS) ... "
+   put "... generating ... "
+   EC := (run satis {})
+   if ((EC) > 0) then; throw "generation ERROR! "; end if
+   put "... building ... "
+   EC := (run gprbuild {-P(PF)})
+   if ((EC) > 0) then; throw "building ERROR! "; end if
+   put "... running ... "
+   pipeline
+      EC := (run (XF))
+      put-input-into (RF)
+   end pipeline
+   if ((EC) > 1) then; throw "testing ERROR! "; end if
+   if ((EC) = 0) then
+      put "all tests passed"
+   else
+      put "at least one test FAILED "'('" results in (TS)/(RF)"')'
+   end if
+end loop
+put "... all testing completed. "
+popd
+```
+
+
+
+
+-----------------------------------------------------------------------------------------------
+## 
+
+
+
+
+-----------------------------------------------------------------------------------------------
+## 
+
+
+
+
+-----------------------------------------------------------------------------------------------
+## 
+
+
+
+
+
