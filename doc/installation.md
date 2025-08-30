@@ -1,6 +1,8 @@
 # Installing SATIS
 
-SATIS is kept in a repository on [GitHub](https://github.com/).
+SATIS is kept in a repository on [GitHub](https://github.com/theREALdebater/satis).
+
+
 
 ........
 
