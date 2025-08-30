@@ -1,3 +1,10 @@
+--  Copyright (C) 2025 Nick Roberts
+--  This file is part of SATIS, and is distributed under the terms of the
+--  GNU General Public License v3. See the LICENCE.txt file for details.
+--  This program is distributed in the hope that it will be useful,
+--  but WITHOUT ANY WARRANTY; without even the implied warranty of
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 --/ Command_Line_Framework package specification:
 
 --| This package provides facilities to enable a program (main) procedure to interpret options
@@ -19,7 +26,7 @@ package Command_Line_Framework is
 --| directly using `Ada.Text_IO` and related packages, 
 --| because this will allow alternative implementations to be easily put in place, and the errors can be caught
 --| by a test harness (see below).   
-
+   
    --\
    --/ Program specifications:
    
@@ -56,12 +63,12 @@ package Command_Line_Framework is
                             Parameter_Moniker: in String := "");
 
    procedure Insert_Standard_Options;
-                                 
+                                   
    --\
    --/ Argument lists:
    
    package Argument_Lists is new Ada.Containers.Doubly_Linked_Lists(Unbounded_String);
-      
+   
    subtype Argument_List is Argument_Lists.List;
    
    --\
@@ -103,11 +110,11 @@ package Command_Line_Framework is
    type Help_Event is new Harness_Event with null record;
    
    --\
-
+   
 private
 
    --/ Option descriptors:
-
+   
    type Option_Descriptor is
       record
          Option_Name:       Unbounded_String; -- option is long if name length > 1
@@ -121,9 +128,7 @@ private
       record
          Options: Option_Lists.List;
       end record;
-
+   
    --\
       
 end;
-
---\
